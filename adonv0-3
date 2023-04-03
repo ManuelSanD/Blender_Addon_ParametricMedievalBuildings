@@ -1,0 +1,99 @@
+bl_info = {
+    "name": "Addon-construccionesParametricas",
+    "description": "este Addon va orientado a la creacion de edificaciones parametricas con tematica principalmente medieval",
+    "author": "Manuel Santos",
+    "version": (0, 3, 2),
+    "blender": (3, 4, 0),
+    "location": "View3D > Tool",
+    "warning": "",
+    "wiki_url": "",
+    "tracker_url": "",
+    "category": "Add Mesh"
+}
+
+import bpy
+
+
+def my_handler(self, context):
+    print("Selected option:", self.my_enum)
+
+
+class AparicionOperator(bpy.types.Operator):
+    bl_idname = "object.import_castillo"
+    bl_label = "Import Castillo"
+    
+    def execute(self, context):
+        # Ruta de la biblioteca
+        library_path = "C:/users/manus/Desktop/proyectos/clase/proyectoFinal/pruebas_nop/castillo_v2.1.blend"
+
+        # Nombre del objeto que deseas importar
+        object_name = 'castillo'
+
+        # Carga la biblioteca externa
+        with bpy.data.libraries.load(library_path) as (data_from, data_to):
+            # Copia el objeto deseado a la escena actual
+            data_to.objects = [name for name in data_from.objects if name.startswith(object_name)]
+
+        # Coloca el objeto importado en la escena actual
+        for obj in data_to.objects:
+            bpy.context.scene.collection.objects.link(obj)
+
+        return {'FINISHED'}
+
+
+class Panel1(bpy.types.Panel):
+    bl_label = "Generar Construcciones"
+    bl_idname = "PT_TestPanel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Addon Parametrico"
+    
+    def draw(self, context):
+        layout = self.layout
+        
+        #print("hola")
+        
+        row = layout.row()
+        row.label(text= "hola", icon= "FUND")
+        
+        row = layout.row()
+        row.label(text= "Castillo", icon= "HOME")
+        #row = layout.row()
+        row.operator(AparicionOperator.bl_idname, text="Import Castillo")
+        
+        obj = context.active_object
+        if obj:
+            row = layout.row()
+            row.label(text=f"Selected Object: {obj.name}")
+        else:
+            row = layout.row()
+            row.label(text="No object selected")
+        
+        if "castillo" in obj.name:
+            row = layout.row()
+            row.label(text=f"Nombre: {obj.name}")
+            row = layout.row()
+            #row.label(text="tipo de tejas")
+            row.prop(context.scene, "enum_teja", text="Seleccionar tipo de tejas")
+        else:
+            row = layout.row()
+            row.label(text="No object selected")
+        
+def register():
+    bpy.utils.register_class(Panel1)
+    bpy.utils.register_class(AparicionOperator)
+    bpy.types.Scene.enum_teja = bpy.props.EnumProperty(
+        items=[
+            ("OPCION1", "Opción 1", ""),
+            ("OPCION2", "Opción 2", "")
+        ],
+        update=my_handler
+    )
+    
+def unregister():
+    bpy.utils.unregister_class(Panel1)
+    bpy.utils.unregister_class(AparicionOperator)
+    del bpy.types.Scene.my_enum
+    
+if __name__ == "__main__":
+    register()
