@@ -12,11 +12,25 @@ bl_info = {
 }
 
 import bpy
+from bpy.props import StringProperty, EnumProperty, PointerProperty
+from bpy.types import Panel, Operator, PropertyGroup
+import os
 
 
 def my_handler(self, context):
-    print("Selected option:", self.my_enum)
+    obj = context.active_object
+    if obj and "castillo" in obj.name:
+        if self.enum_teja == "OPCION1":
+            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = False,
+            obj.modifiers["GeometryNodes"]["Input_12"] = 0,
+            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = True
 
+        elif self.enum_teja == "OPCION2":
+            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = False,
+            obj.modifiers["GeometryNodes"]["Input_12"] = 0.01,
+            bpy.data.node_groups["Nodos de geometría.001"].inputs[4].hide_value = True
+
+        
 
 class AparicionOperator(bpy.types.Operator):
     bl_idname = "object.import_castillo"
@@ -24,8 +38,8 @@ class AparicionOperator(bpy.types.Operator):
     
     def execute(self, context):
         # Ruta de la biblioteca
-        library_path = "C:/users/manus/Desktop/proyectos/clase/proyectoFinal/pruebas_nop/castillo_v2.1.blend"
-
+        library_path = bpy.context.scene.layama_tool.importPath + "/castillo_v2.1.blend"
+        
         # Nombre del objeto que deseas importar
         object_name = 'castillo'
 
@@ -41,6 +55,26 @@ class AparicionOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class EIProperties(PropertyGroup):
+
+    def GetLayamaCollections(self, context):
+        camNames = []
+        camNames.append("Scene Collection")
+        for collection in bpy.data.collections:
+            camNames.append(collection.name)
+        collectionNames = [(name, "CAMERAS FROM: " + name, "")
+                           for name in camNames]
+        return collectionNames
+
+    importPath: StringProperty(
+        name="Output path",
+        description="Choose a path to be used as render and .lym file output.",
+        default=os.path.expanduser('~\\Documents\\'),
+        maxlen=1024,
+        subtype='DIR_PATH'
+    )
+
+
 class Panel1(bpy.types.Panel):
     bl_label = "Generar Construcciones"
     bl_idname = "PT_TestPanel"
@@ -50,14 +84,20 @@ class Panel1(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
+        layamaTool = scene.layama_tool
         
         #print("hola")
+        row = layout.row()
+        layout.prop(layamaTool, "importPath")    
+        
         
         row = layout.row()
         row.label(text= "hola", icon= "FUND")
         
         row = layout.row()
         row.label(text= "Castillo", icon= "HOME")
+
         #row = layout.row()
         row.operator(AparicionOperator.bl_idname, text="Import Castillo")
         
@@ -78,22 +118,42 @@ class Panel1(bpy.types.Panel):
         else:
             row = layout.row()
             row.label(text="No object selected")
+            
+            
+classes = (
+    EIProperties,
+    AparicionOperator,
+    Panel1
+    )
+            
+
         
 def register():
-    bpy.utils.register_class(Panel1)
-    bpy.utils.register_class(AparicionOperator)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+    bpy.types.Scene.layama_tool = PointerProperty(type=EIProperties)
+    
+    #bpy.utils.register_class(Panel1)
+    #bpy.utils.register_class(AparicionOperator)
     bpy.types.Scene.enum_teja = bpy.props.EnumProperty(
         items=[
-            ("OPCION1", "Opción 1", ""),
-            ("OPCION2", "Opción 2", "")
+            ("OPCION1", "Opción 1", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0"),
+            ("OPCION2", "Opción 2", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0.01")
         ],
         update=my_handler
     )
     
 def unregister():
-    bpy.utils.unregister_class(Panel1)
-    bpy.utils.unregister_class(AparicionOperator)
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
+    del bpy.types.Scene.layama_tool
+    
+    #bpy.utils.unregister_class(Panel1)
+    #bpy.utils.unregister_class(AparicionOperator)
     del bpy.types.Scene.my_enum
     
 if __name__ == "__main__":
-    register()
+    register() 
+
