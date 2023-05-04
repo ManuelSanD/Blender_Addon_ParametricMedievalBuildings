@@ -17,6 +17,7 @@ from bpy.types import Panel, Operator, PropertyGroup
 import os
 
 
+
 def my_handler(self, context):
     obj = context.active_object
     if obj and "castillo" in obj.name:
@@ -32,27 +33,72 @@ def my_handler(self, context):
 
         
 
-class AparicionOperator(bpy.types.Operator):
+class ImportCastillo(bpy.types.Operator):
     bl_idname = "object.import_castillo"
     bl_label = "Import Castillo"
     
     def execute(self, context):
-        # Ruta de la biblioteca
-        library_path = bpy.context.scene.layama_tool.importPath + "/castillo_v2.1.blend"
+        # Librarty route
+        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
         
-        # Nombre del objeto que deseas importar
+        # Name of the import object
         object_name = 'castillo'
 
-        # Carga la biblioteca externa
+        # uptolad the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
-            # Copia el objeto deseado a la escena actual
+            # Copy the object to the curent scene
             data_to.objects = [name for name in data_from.objects if name.startswith(object_name)]
 
-        # Coloca el objeto importado en la escena actual
+        # Put the imported object in the curent scene
         for obj in data_to.objects:
             bpy.context.scene.collection.objects.link(obj)
 
         return {'FINISHED'}
+
+class PutGrass(bpy.types.Operator):
+    bl_idname = "object.import_grass_mod"
+    bl_label = "Import GrasMod"
+    
+    
+        
+    def execute(self, context):
+        selected_object  = context.active_object
+
+        # library route
+        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+        
+        modifire_name = 'PlantsModifier'
+        
+        # uptolad the library
+        with bpy.data.libraries.load(library_path) as (data_from, data_to):
+            # Copy the object to the curent scene
+            data_to.objects = [name for name in data_from.objects if name.startswith(modifire_name)]
+
+        # Put the imported object in the curent scene
+        for obj in data_to.objects:
+            bpy.context.scene.collection.objects.link(obj)
+            
+            
+            
+        
+        modifier = None
+        for obj in data_to.objects:
+            for mod in obj.modifiers:
+                if mod.name == modifire_name:
+                    modifier = mod
+                    break
+            if modifier:
+                break
+        
+        if modifier:    
+            # append the mod
+            selected_object.modifiers.append(modifier)
+        else:
+            print("No se pudo encontrar el modificador {modifire_name} en la biblioteca.")
+        
+        return {'FINISHED'}
+    
+
 
 
 class EIProperties(PropertyGroup):
@@ -85,11 +131,11 @@ class Panel1(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        layamaTool = scene.layama_tool
+        importTool = scene.import_tool
         
         #print("hola")
         row = layout.row()
-        layout.prop(layamaTool, "importPath")    
+        layout.prop(importTool, "importPath")    
         
         
         row = layout.row()
@@ -99,7 +145,11 @@ class Panel1(bpy.types.Panel):
         row.label(text= "Castillo", icon= "HOME")
 
         #row = layout.row()
-        row.operator(AparicionOperator.bl_idname, text="Import Castillo")
+        row.operator(ImportCastillo.bl_idname, text="Import Castillo")
+
+        row = layout.row()
+        row.label(text= "Grass", icon= "GEOMETRY_NODES")
+        row.operator(PutGrass.bl_idname, text="Put Grass")
         
         obj = context.active_object
         if obj:
@@ -122,7 +172,8 @@ class Panel1(bpy.types.Panel):
             
 classes = (
     EIProperties,
-    AparicionOperator,
+    ImportCastillo,
+    PutGrass,
     Panel1
     )
             
@@ -132,7 +183,7 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
-    bpy.types.Scene.layama_tool = PointerProperty(type=EIProperties)
+    bpy.types.Scene.import_tool = PointerProperty(type=EIProperties)
     
     #bpy.utils.register_class(Panel1)
     #bpy.utils.register_class(AparicionOperator)
@@ -148,7 +199,7 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
-    del bpy.types.Scene.layama_tool
+    del bpy.types.Scene.import_tool
     
     #bpy.utils.unregister_class(Panel1)
     #bpy.utils.unregister_class(AparicionOperator)
@@ -156,4 +207,3 @@ def unregister():
     
 if __name__ == "__main__":
     register() 
-
