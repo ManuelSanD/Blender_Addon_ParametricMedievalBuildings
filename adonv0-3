@@ -67,12 +67,12 @@ class PutGrass(bpy.types.Operator):
         # library route
         library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
         
-        modifire_name = 'PlantsModifier'
+        modifier_name = 'GrassFloor'
         
         # uptolad the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
             # Copy the object to the curent scene
-            data_to.objects = [name for name in data_from.objects if name.startswith(modifire_name)]
+            data_to.objects = [name for name in data_from.objects if name.startswith(modifier_name)]
 
         # Put the imported object in the curent scene
         for obj in data_to.objects:
@@ -84,7 +84,7 @@ class PutGrass(bpy.types.Operator):
         modifier = None
         for obj in data_to.objects:
             for mod in obj.modifiers:
-                if mod.name == modifire_name:
+                if mod.name == modifier_name:
                     modifier = mod
                     break
             if modifier:
@@ -94,7 +94,25 @@ class PutGrass(bpy.types.Operator):
             # append the mod
             selected_object.modifiers.append(modifier)
         else:
-            print("No se pudo encontrar el modificador {modifire_name} en la biblioteca.")
+            print("No se pudo encontrar el modificador {modifier_name} en la biblioteca.")
+        
+        # select the source object
+        source_obj = bpy.data.objects[modifier_name]
+        
+       # Copiar los modificadores
+        for modifier in source_obj.modifiers:
+            new_modifier = selected_object.modifiers.new(name=modifier.name, type=modifier.type)
+            for attr in dir(modifier):
+                if not attr.startswith('__'):
+                    try:
+                        setattr(new_modifier, attr, getattr(modifier, attr))
+                    except AttributeError:
+                        # Opción 1: Ignorar atributos de solo lectura
+                        pass
+        
+        
+        # Borrar el objeto
+        bpy.data.objects.remove(source_obj, do_unlink=True)
         
         return {'FINISHED'}
     
