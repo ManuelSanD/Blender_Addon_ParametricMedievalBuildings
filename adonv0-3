@@ -46,7 +46,6 @@ class ColorGrass():
             ColorGrass.selectedOption = 3
             print("opcion 3")
             
-
 class ImportCastillo(bpy.types.Operator):
     bl_idname = "object.import_castillo"
     bl_label = "Import Castillo"
