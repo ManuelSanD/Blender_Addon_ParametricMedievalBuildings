@@ -18,7 +18,7 @@ import os
 
 
 
-def my_handler(self, context):
+def castleOptions(self, context):
     obj = context.active_object
     if obj and "castillo" in obj.name:
         if self.enum_teja == "OPCION1":
@@ -31,7 +31,21 @@ def my_handler(self, context):
             obj.modifiers["GeometryNodes"]["Input_12"] = 0.01,
             bpy.data.node_groups["Nodos de geometría.001"].inputs[4].hide_value = True
 
-        
+
+class ColorGrass():
+    selectedOption = 0
+
+    def grassOptions(self, context):
+        if self.grassType == "OPCION1":
+            ColorGrass.selectedOption = 1
+            print("opcion 1")
+        elif self.grassType == "OPCION2":
+            ColorGrass.selectedOption = 2
+            print("opcion 2")
+        elif self.grassType == "OPCION3":
+            ColorGrass.selectedOption = 3
+            print("opcion 3")
+            
 
 class ImportCastillo(bpy.types.Operator):
     bl_idname = "object.import_castillo"
@@ -54,20 +68,27 @@ class ImportCastillo(bpy.types.Operator):
             bpy.context.scene.collection.objects.link(obj)
 
         return {'FINISHED'}
-
+    
 class PutGrass(bpy.types.Operator):
     bl_idname = "object.import_grass_mod"
     bl_label = "Import GrasMod"
-    
-    
-        
+
     def execute(self, context):
-        selected_object  = context.active_object
+        selected_object = context.active_object
 
         # library route
         library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+
+        modifier_name = 'GrassGreenFloor'
+
+        if ColorGrass.selectedOption == 1:
+            modifier_name = "GrassGreenFloor"
+        elif ColorGrass.selectedOption == 2:
+            modifier_name = "GrassReedFloor"
+        else:
+            modifier_name = "GrassBlueFloor"
         
-        modifier_name = 'GrassFloor'
+        
         
         # uptolad the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
@@ -115,7 +136,6 @@ class PutGrass(bpy.types.Operator):
         bpy.data.objects.remove(source_obj, do_unlink=True)
         
         return {'FINISHED'}
-    
 
 
 
@@ -164,6 +184,10 @@ class Panel1(bpy.types.Panel):
 
         #row = layout.row()
         row.operator(ImportCastillo.bl_idname, text="Import Castillo")
+        
+        #color Grass options
+        row = layout.row()
+        row.prop(context.scene, "grassType", text="Select grass color")
 
         row = layout.row()
         row.label(text= "Grass", icon= "GEOMETRY_NODES")
@@ -182,7 +206,7 @@ class Panel1(bpy.types.Panel):
             row.label(text=f"Nombre: {obj.name}")
             row = layout.row()
             #row.label(text="tipo de tejas")
-            row.prop(context.scene, "enum_teja", text="Seleccionar tipo de tejas")
+            row.prop(context.scene, "enum_teja", text="Select grass color")
         else:
             row = layout.row()
             row.label(text="No object selected")
@@ -210,7 +234,15 @@ def register():
             ("OPCION1", "Opción 1", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0"),
             ("OPCION2", "Opción 2", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0.01")
         ],
-        update=my_handler
+        update=castleOptions
+    )
+    bpy.types.Scene.grassType = bpy.props.EnumProperty(
+        items=[
+            ("OPCION1", "Green", "Green grass"),
+            ("OPCION2", "Red", "Red grass"),
+            ("OPCION3", "Blue", "Blue grass")
+        ],
+        update=ColorGrass.grassOptions
     )
     
 def unregister():
