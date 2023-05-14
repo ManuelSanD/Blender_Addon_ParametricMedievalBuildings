@@ -67,6 +67,69 @@ class ImportCastillo(bpy.types.Operator):
             bpy.context.scene.collection.objects.link(obj)
 
         return {'FINISHED'}
+ 
+ 
+class PutWall(bpy.types.Operator):
+    bl_idname = "object.import_wall_mod"
+    bl_label = "Import wallMod"
+
+    def execute(self, context):
+        selected_object = context.active_object
+
+        # library route
+        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+
+        modifier_name = 'muro'
+
+        # uptolad the library
+        with bpy.data.libraries.load(library_path) as (data_from, data_to):
+            # Copy the object to the curent scene
+            data_to.objects = [name for name in data_from.objects if name.startswith(modifier_name)]
+
+        # Put the imported object in the curent scene
+        for obj in data_to.objects:
+            bpy.context.scene.collection.objects.link(obj)
+            
+            
+            
+        
+        modifier = None
+        for obj in data_to.objects:
+            for mod in obj.modifiers:
+                if mod.name == modifier_name:
+                    modifier = mod
+                    break
+            if modifier:
+                break
+        
+        if modifier:    
+            # append the mod
+            selected_object.modifiers.append(modifier)
+        else:
+            print("No se pudo encontrar el modificador {modifier_name} en la biblioteca.")
+        
+        # select the source object
+        source_obj = bpy.data.objects[modifier_name]
+        
+       # Copiar los modificadores
+        for modifier in source_obj.modifiers:
+            new_modifier = selected_object.modifiers.new(name=modifier.name, type=modifier.type)
+            for attr in dir(modifier):
+                if not attr.startswith('__'):
+                    try:
+                        setattr(new_modifier, attr, getattr(modifier, attr))
+                    except AttributeError:
+                        # Opción 1: Ignorar atributos de solo lectura
+                        pass
+        
+        
+        # Borrar el objeto
+        bpy.data.objects.remove(source_obj, do_unlink=True)
+        
+        return {'FINISHED'}
+
+
+ 
     
 class PutGrass(bpy.types.Operator):
     bl_idname = "object.import_grass_mod"
@@ -176,13 +239,21 @@ class Panel1(bpy.types.Panel):
         
         
         row = layout.row()
-        row.label(text= "hola", icon= "FUND")
+        row.label(text= "Parametric buildongs generator", icon= "FUND")
         
+        #
+        #Import Castle
         row = layout.row()
-        row.label(text= "Castillo", icon= "HOME")
-
+        row.label(text= "Castle", icon= "HOME")
         #row = layout.row()
-        row.operator(ImportCastillo.bl_idname, text="Import Castillo")
+        row.operator(ImportCastillo.bl_idname, text="Import Castle")
+        
+        #
+        #Import Wall
+        row = layout.row()
+        row.label(text= "Wall", icon= "CURVE_DATA")
+        #row = layout.row()
+        row.operator(PutWall.bl_idname, text="Put Wall")
         
         #color Grass options
         row = layout.row()
@@ -214,6 +285,7 @@ class Panel1(bpy.types.Panel):
 classes = (
     EIProperties,
     ImportCastillo,
+    PutWall,
     PutGrass,
     Panel1
     )
