@@ -16,22 +16,6 @@ from bpy.props import StringProperty, EnumProperty, PointerProperty
 from bpy.types import Panel, Operator, PropertyGroup
 import os
 
-
-
-def castleOptions(self, context):
-    obj = context.active_object
-    if obj and "castillo" in obj.name:
-        if self.enum_teja == "OPCION1":
-            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = False,
-            obj.modifiers["GeometryNodes"]["Input_12"] = 0,
-            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = True
-
-        elif self.enum_teja == "OPCION2":
-            bpy.data.node_groups["GeometryNodes"].inputs[4].hide_value = False,
-            obj.modifiers["GeometryNodes"]["Input_12"] = 0.01,
-            bpy.data.node_groups["Nodos de geometría.001"].inputs[4].hide_value = True
-
-
 class ColorGrass():
     selectedOption = 0
 
@@ -52,7 +36,7 @@ class ImportCastillo(bpy.types.Operator):
     
     def execute(self, context):
         # Librarty route
-        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.2.blend"
         
         # Name of the import object
         object_name = 'castillo'
@@ -139,7 +123,7 @@ class PutGrass(bpy.types.Operator):
         selected_object = context.active_object
 
         # library route
-        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.2.blend"
 
         modifier_name = 'GrassGreenFloor'
 
@@ -213,8 +197,8 @@ class EIProperties(PropertyGroup):
         return collectionNames
 
     importPath: StringProperty(
-        name="Output path",
-        description="Choose a path to be used as render and .lym file output.",
+        name="Library path",
+        description="Choose the library path",
         default=os.path.expanduser('~\\Documents\\'),
         maxlen=1024,
         subtype='DIR_PATH'
@@ -239,7 +223,7 @@ class Panel1(bpy.types.Panel):
         
         
         row = layout.row()
-        row.label(text= "Parametric buildongs generator", icon= "FUND")
+        row.label(text= "Parametric buildongs generator", icon= "FILE_SCRIPT")
         
         #
         #Import Castle
@@ -271,16 +255,7 @@ class Panel1(bpy.types.Panel):
             row = layout.row()
             row.label(text="No object selected")
         
-        if "castillo" in obj.name:
-            row = layout.row()
-            row.label(text=f"Nombre: {obj.name}")
-            row = layout.row()
-            #row.label(text="tipo de tejas")
-            row.prop(context.scene, "enum_teja", text="Select grass color")
-        else:
-            row = layout.row()
-            row.label(text="No object selected")
-            
+        
             
 classes = (
     EIProperties,
@@ -300,13 +275,7 @@ def register():
     
     #bpy.utils.register_class(Panel1)
     #bpy.utils.register_class(AparicionOperator)
-    bpy.types.Scene.enum_teja = bpy.props.EnumProperty(
-        items=[
-            ("OPCION1", "Opción 1", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0"),
-            ("OPCION2", "Opción 2", "bpy.context.object.modifiers['GeometryNodes']['Input_12'] = 0.01")
-        ],
-        update=castleOptions
-    )
+    
     bpy.types.Scene.grassType = bpy.props.EnumProperty(
         items=[
             ("OPCION1", "Green", "Green grass"),
