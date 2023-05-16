@@ -51,7 +51,6 @@ class ImportCastle(bpy.types.Operator):
         # Put the imported object in the curent scene
         for obj in data_to.objects:
             bpy.context.scene.collection.objects.link(obj)
-
         return {"FINISHED"}
 
 
