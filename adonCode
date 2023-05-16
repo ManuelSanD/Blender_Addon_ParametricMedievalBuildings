@@ -1,82 +1,83 @@
-bl_info = {
-    "name": "Addon-construccionesParametricas",
-    "description": "este Addon va orientado a la creacion de edificaciones parametricas con tematica principalmente medieval",
-    "author": "Manuel Santos",
-    "version": (0, 3, 2),
-    "blender": (3, 4, 0),
-    "location": "View3D > Tool",
-    "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
-    "category": "Add Mesh"
-}
-
 import bpy
 from bpy.props import StringProperty, EnumProperty, PointerProperty
 from bpy.types import Panel, Operator, PropertyGroup
 import os
 
-class ColorGrass():
+bl_info = {
+    "name": "Addon-ParametricConstructions",
+    "description": "This addon has been designed to generate medieval constructions in a parametric way",
+    "author": "Manuel Santos",
+    "version": (0, 3, 2),
+    "blender": (3, 4, 0),
+    "location": "View3D > Tool",
+    "warning": "",
+    "wiki_url": "https://github.com/ManuelSanD/ExportImport_Addon",
+    "tracker_url": "",
+    "category": "Add Mesh",
+}
+
+CASTLE_BLEND_FILE = "castle_v2.2.blend"
+
+class ColorGrass:
     selectedOption = 0
 
     def grassOptions(self, context):
-        if self.grassType == "OPCION1":
+        if self.grassType == "OPTION1":
             ColorGrass.selectedOption = 1
-            print("opcion 1")
-        elif self.grassType == "OPCION2":
+        elif self.grassType == "OPTION2":
             ColorGrass.selectedOption = 2
-            print("opcion 2")
-        elif self.grassType == "OPCION3":
+        elif self.grassType == "OPTION3":
             ColorGrass.selectedOption = 3
-            print("opcion 3")
-            
-class ImportCastillo(bpy.types.Operator):
-    bl_idname = "object.import_castillo"
-    bl_label = "Import Castillo"
-    
+
+
+class ImportCastle(bpy.types.Operator):
+    bl_idname = "object.import_castle"
+    bl_label = "Import castle"
+
     def execute(self, context):
         # Librarty route
-        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.2.blend"
-        
-        # Name of the import object
-        object_name = 'castillo'
+        library_path = bpy.context.scene.import_tool.importPath + "/" + CASTLE_BLEND_FILE
 
-        # uptolad the library
+        # Name of the import object
+        object_name = "castillo"
+
+        # Load the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
             # Copy the object to the curent scene
-            data_to.objects = [name for name in data_from.objects if name.startswith(object_name)]
+            data_to.objects = [
+                name for name in data_from.objects if name.startswith(object_name)
+            ]
 
         # Put the imported object in the curent scene
         for obj in data_to.objects:
             bpy.context.scene.collection.objects.link(obj)
 
-        return {'FINISHED'}
- 
- 
+        return {"FINISHED"}
+
+
 class PutWall(bpy.types.Operator):
     bl_idname = "object.import_wall_mod"
-    bl_label = "Import wallMod"
+    bl_label = "Import WallMod"
 
     def execute(self, context):
         selected_object = context.active_object
 
-        # library route
-        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.1.blend"
+        # Library path
+        library_path = bpy.context.scene.import_tool.importPath + "/" + CASTLE_BLEND_FILE
 
-        modifier_name = 'muro'
+        modifier_name = "muro"
 
-        # uptolad the library
+        # Load the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
             # Copy the object to the curent scene
-            data_to.objects = [name for name in data_from.objects if name.startswith(modifier_name)]
+            data_to.objects = [
+                name for name in data_from.objects if name.startswith(modifier_name)
+            ]
 
         # Put the imported object in the curent scene
         for obj in data_to.objects:
             bpy.context.scene.collection.objects.link(obj)
-            
-            
-            
-        
+
         modifier = None
         for obj in data_to.objects:
             for mod in obj.modifiers:
@@ -85,36 +86,37 @@ class PutWall(bpy.types.Operator):
                     break
             if modifier:
                 break
-        
-        if modifier:    
-            # append the mod
+
+        if modifier:
+            # Append the modifier
             selected_object.modifiers.append(modifier)
         else:
-            print("No se pudo encontrar el modificador {modifier_name} en la biblioteca.")
-        
-        # select the source object
+            print(
+                "Cannot find modifier {modifier_name} in the library."
+            )
+
+        # Select the source object
         source_obj = bpy.data.objects[modifier_name]
-        
-       # Copiar los modificadores
+
+        # Copy source modifiers
         for modifier in source_obj.modifiers:
-            new_modifier = selected_object.modifiers.new(name=modifier.name, type=modifier.type)
+            new_modifier = selected_object.modifiers.new(
+                name=modifier.name, type=modifier.type
+            )
             for attr in dir(modifier):
-                if not attr.startswith('__'):
+                if not attr.startswith("__"):
                     try:
                         setattr(new_modifier, attr, getattr(modifier, attr))
                     except AttributeError:
-                        # Opción 1: Ignorar atributos de solo lectura
+                        # Option 1: Ignore read-only attiributes
                         pass
-        
-        
+
         # Borrar el objeto
         bpy.data.objects.remove(source_obj, do_unlink=True)
-        
-        return {'FINISHED'}
+
+        return {"FINISHED"}
 
 
- 
-    
 class PutGrass(bpy.types.Operator):
     bl_idname = "object.import_grass_mod"
     bl_label = "Import GrasMod"
@@ -122,10 +124,10 @@ class PutGrass(bpy.types.Operator):
     def execute(self, context):
         selected_object = context.active_object
 
-        # library route
-        library_path = bpy.context.scene.import_tool.importPath + "/castillo_v2.2.blend"
+        # Library path
+        library_path = bpy.context.scene.import_tool.importPath + "/" + CASTLE_BLEND_FILE
 
-        modifier_name = 'GrassGreenFloor'
+        modifier_name = "GrassGreenFloor"
 
         if ColorGrass.selectedOption == 1:
             modifier_name = "GrassGreenFloor"
@@ -133,21 +135,18 @@ class PutGrass(bpy.types.Operator):
             modifier_name = "GrassReedFloor"
         else:
             modifier_name = "GrassBlueFloor"
-        
-        
-        
-        # uptolad the library
+
+        # Load the library
         with bpy.data.libraries.load(library_path) as (data_from, data_to):
             # Copy the object to the curent scene
-            data_to.objects = [name for name in data_from.objects if name.startswith(modifier_name)]
+            data_to.objects = [
+                name for name in data_from.objects if name.startswith(modifier_name)
+            ]
 
         # Put the imported object in the curent scene
         for obj in data_to.objects:
             bpy.context.scene.collection.objects.link(obj)
-            
-            
-            
-        
+
         modifier = None
         for obj in data_to.objects:
             for mod in obj.modifiers:
@@ -156,97 +155,91 @@ class PutGrass(bpy.types.Operator):
                     break
             if modifier:
                 break
-        
-        if modifier:    
-            # append the mod
+
+        if modifier:
+            # Append the mod
             selected_object.modifiers.append(modifier)
         else:
-            print("No se pudo encontrar el modificador {modifier_name} en la biblioteca.")
-        
-        # select the source object
+            print(
+                "No se pudo encontrar el modificador {modifier_name} en la biblioteca."
+            )
+
+        # Select the source object
         source_obj = bpy.data.objects[modifier_name]
-        
-       # Copiar los modificadores
+
+        # Copy source modifiers
         for modifier in source_obj.modifiers:
-            new_modifier = selected_object.modifiers.new(name=modifier.name, type=modifier.type)
+            new_modifier = selected_object.modifiers.new(
+                name=modifier.name, type=modifier.type
+            )
             for attr in dir(modifier):
-                if not attr.startswith('__'):
+                if not attr.startswith("__"):
                     try:
                         setattr(new_modifier, attr, getattr(modifier, attr))
                     except AttributeError:
-                        # Opción 1: Ignorar atributos de solo lectura
+                        # Option 1: Ignore read-only attributes
                         pass
-        
-        
-        # Borrar el objeto
-        bpy.data.objects.remove(source_obj, do_unlink=True)
-        
-        return {'FINISHED'}
 
+        # Delete the object
+        bpy.data.objects.remove(source_obj, do_unlink=True)
+
+        return {"FINISHED"}
 
 
 class EIProperties(PropertyGroup):
-
     def GetLayamaCollections(self, context):
         camNames = []
         camNames.append("Scene Collection")
         for collection in bpy.data.collections:
             camNames.append(collection.name)
-        collectionNames = [(name, "CAMERAS FROM: " + name, "")
-                           for name in camNames]
+        collectionNames = [(name, "CAMERAS FROM: " + name, "") for name in camNames]
         return collectionNames
 
     importPath: StringProperty(
         name="Library path",
         description="Choose the library path",
-        default=os.path.expanduser('~\\Documents\\'),
+        default=os.path.expanduser("~\\Documents\\"),
         maxlen=1024,
-        subtype='DIR_PATH'
+        subtype="DIR_PATH",
     )
 
 
 class Panel1(bpy.types.Panel):
-    bl_label = "Generar Construcciones"
+    bl_label = "Generate Constructions"
     bl_idname = "PT_TestPanel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Addon Parametrico"
-    
+    bl_category = "Parametric addon"
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
         importTool = scene.import_tool
-        
-        #print("hola")
+
         row = layout.row()
-        layout.prop(importTool, "importPath")    
-        
-        
+        layout.prop(importTool, "importPath")
+
         row = layout.row()
-        row.label(text= "Parametric buildongs generator", icon= "FILE_SCRIPT")
-        
-        #
-        #Import Castle
+        row.label(text="Parametric buildings generator", icon="FILE_SCRIPT")
+
+        # Import Castle
         row = layout.row()
-        row.label(text= "Castle", icon= "HOME")
-        #row = layout.row()
-        row.operator(ImportCastillo.bl_idname, text="Import Castle")
-        
-        #
-        #Import Wall
+        row.label(text="Castle", icon="HOME")
+        row.operator(ImportCastle.bl_idname, text="Import Castle")
+
+        # Import Wall
         row = layout.row()
-        row.label(text= "Wall", icon= "CURVE_DATA")
-        #row = layout.row()
+        row.label(text="Wall", icon="CURVE_DATA")
         row.operator(PutWall.bl_idname, text="Put Wall")
-        
-        #color Grass options
+
+        # color Grass options
         row = layout.row()
         row.prop(context.scene, "grassType", text="Select grass color")
 
         row = layout.row()
-        row.label(text= "Grass", icon= "GEOMETRY_NODES")
+        row.label(text="Grass", icon="GEOMETRY_NODES")
         row.operator(PutGrass.bl_idname, text="Put Grass")
-        
+
         obj = context.active_object
         if obj:
             row = layout.row()
@@ -254,46 +247,36 @@ class Panel1(bpy.types.Panel):
         else:
             row = layout.row()
             row.label(text="No object selected")
-        
-        
-            
-classes = (
-    EIProperties,
-    ImportCastillo,
-    PutWall,
-    PutGrass,
-    Panel1
-    )
-            
 
-        
+
+classes = (EIProperties, ImportCastle, PutWall, PutGrass, Panel1)
+
+
 def register():
     from bpy.utils import register_class
+
     for cls in classes:
         register_class(cls)
     bpy.types.Scene.import_tool = PointerProperty(type=EIProperties)
-    
-    #bpy.utils.register_class(Panel1)
-    #bpy.utils.register_class(AparicionOperator)
-    
+
     bpy.types.Scene.grassType = bpy.props.EnumProperty(
         items=[
-            ("OPCION1", "Green", "Green grass"),
-            ("OPCION2", "Red", "Red grass"),
-            ("OPCION3", "Blue", "Blue grass")
+            ("OPTION1", "Green", "Green grass"),
+            ("OPTION2", "Red", "Red grass"),
+            ("OPTION3", "Blue", "Blue grass"),
         ],
-        update=ColorGrass.grassOptions
+        update=ColorGrass.grassOptions,
     )
-    
+
+
 def unregister():
     from bpy.utils import unregister_class
+
     for cls in reversed(classes):
         unregister_class(cls)
     del bpy.types.Scene.import_tool
-    
-    #bpy.utils.unregister_class(Panel1)
-    #bpy.utils.unregister_class(AparicionOperator)
     del bpy.types.Scene.my_enum
-    
+
+
 if __name__ == "__main__":
-    register() 
+    register()
